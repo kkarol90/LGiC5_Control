@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31919.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LGiC5_Control", "LGiC5_Control\LGiC5_Control.csproj", "{F414486B-5727-462F-9897-B0DD451AA9A9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriveControlLibrary", "DriveControlLibrary\DriveControlLibrary.csproj", "{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F414486B-5727-462F-9897-B0DD451AA9A9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F414486B-5727-462F-9897-B0DD451AA9A9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F414486B-5727-462F-9897-B0DD451AA9A9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F414486B-5727-462F-9897-B0DD451AA9A9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {28459A60-8B7B-4206-A600-F4E73397A9F8}
+	EndGlobalSection
+EndGlobal

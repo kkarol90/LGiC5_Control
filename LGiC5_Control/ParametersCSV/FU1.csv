@@ -1,0 +1,61 @@
+Address;Code;Parameter Name;Factory default;Default;Unit;Max;Min;Changeable;ReadOnly;iC5
+33281;F1;Run Prohibit;0;None;;2;0;0;;1
+33282;F2;ACC Pattern;0;Linear;;1;0;0;;1
+33283;F3;DEC Pattern;0;Linear;;1;0;0;;1
+33284;F4;Stop Method;0;Decel;;2;0;0;;1
+33285;F5;;;;;;;;;0
+33286;F6;;;;;;;;;0
+33287;F7;;;;;;;;;0
+33288;F8;DcBr freq;500;5.00;Hz;6000;startFreq;0;;1
+33289;F9;DcBlk time;10;0.10;sec;6000;0;0;;1
+33290;F10;DcBr value;50;0.50;;200;0;0;;1
+33291;F11;DcBr time;10;0.10;sec;600;0;0;;1
+33292;F12;DcSt value;50;0.50;;200;0;0;;1
+33293;F13;DcSt time;0;0.00;sec;600;0;0;;1
+33294;F14;PreExTime;10;0.10;sec;600;0;0;;1
+33295;F15;;;;;;;;;0
+33296;F16;;;;;;;;;0
+33297;F17;;;;;;;;;0
+33298;F18;;;;;;;;;0
+33299;F19;;;;;;;;;0
+33300;F20;Jog Freq;1000;10.00;Hz;maxFreq;0;1;;1
+33301;F21;Max Freq;6000;60.00;Hz;Freq Limit High;4000;0;;1
+33302;F22;Base Freq;600;60.00;Hz;Freq Limit High;3000;0;;1
+33303;F23;Start Freq;50;0.50;Hz;1000;0;0;;1
+33304;F24;Freq Limit;0;No;;1;0;0;;1
+33305;F25;High Freq;6000;60.00;Hz;maxFreq;0;0;;1
+33306;F26;Low Freq;50;0.50;Hz;maxFreq;startFreq;0;;1
+33307;F27;Trq Boost;0;Manual;;1;0;0;;1
+33308;F28;Fwd Boost;50;0.50;;150;0;0;;1
+33309;F29;Rev Boost;50;0.50;;150;0;0;;1
+33310;F30;VF Pattern;0;Linear;;2;0;0;;1
+33311;F31;User Freq1;1500;15.00;Hz;maxFreq;0;0;;1
+33312;F32;User Volt 1;25;0.25;;100;0;0;;1
+33313;F33;User Freq 2;3000;30.00;Hz;maxFreq;0;0;;1
+33314;F34;User Volt 2;50;0.50;;100;0;0;;1
+33315;F35;User Freq 3;4500;45.00;Hz;maxFreq;0;0;;1
+33316;F36;User Volt 3;75;0.75;;100;0;0;;1
+33317;F37;User Freq 4;6000;60.00;Hz;maxFreq;0;0;;1
+33318;F38;User Volt 4;100;1.00;;100;0;0;;1
+33319;F39;Volt Perc;1000;10.00;;1100;400;0;;1
+33320;F40;Energy save;0;0.00;;30;0;1;;1
+33321;F41;;;;;;;;;0
+33322;F42;;;;;;;;;0
+33323;F43;;;;;;;;;0
+33324;F44;;;;;;;;;0
+33325;F45;;;;;;;;;0
+33326;F46;;;;;;;;;0
+33327;F47;;;;;;;;;0
+33328;F48;;;;;;;;;0
+33329;F49;;;;;;;;;0
+33330;F50;ETH select;0;0;;1;0;1;;1
+33331;F51;ETH 1min;150;sty.50;;200;F52;1;;1
+33332;F52;ETH cont;100;1.00;;F51;50;1;;1
+33333;F53;Motor type;0;Self-Cool;;1;0;1;;1
+33334;F54;OL level;150;sty.50;;150;30;1;;1
+33335;F55;OL time;100;1.00;sec;300;0;1;;1
+33336;F56;OLT select;1;1;;1;0;1;;1
+33337;F57;OLT level;180;sty.80;;200;30;1;;1
+33338;F58;OLT time;600;6.00;sec;600;0;1;;1
+33339;F59;Stall prev.;0;b000;;7;0;0;;1
+33340;F60;Stall level;150;sty.50;;150;30;0;;1
