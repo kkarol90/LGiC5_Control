@@ -27,9 +27,8 @@ namespace DriveControlLibrary
                 return l;
             }
         }
-        //public CommonArea CommonArea { get; set; }
 
-        public ModbusMemory(DriveModel model)
+        public ModbusMemory()
         {
             // this.CommonArea = new CommonArea();
             CommonArea = new List<Register>();
@@ -37,40 +36,15 @@ namespace DriveControlLibrary
             GroupF = new List<Register>();
             GroupH = new List<Register>();
             GroupI = new List<Register>();
-            generateMemory(model);
-        }
-        private void generateMemory(DriveModel model)
-        {
-            getActiveRegisters("ParametersCSV/DRV.csv", GroupDRV);
-            getActiveRegisters("ParametersCSV/FU1.csv", GroupF);
-            getActiveRegisters("ParametersCSV/FU2.csv", GroupH);
-            getActiveRegisters("ParametersCSV/I_O.csv", GroupI);
-            getActiveRegisters("ParametersCSV/CommonArea.csv", CommonArea);
+            generateMemory();
         }
 
-        private List<Register> getActiveRegisters(string path, List<Register> group)
-        {
-            List<Register> registers = loadParametersFromCSV(path);
-            foreach (var reg in registers)
-            {
-                if (reg.AvailableIn) group.Add(reg);
-            }
-            return registers;
-        }
-
-        private static List<Register> loadParametersFromCSV(string path)
-        {
-            return File.ReadAllLines(path)
-                       .Skip(1)
-                       .Where(line => line.Length > 1)
-                       .Select(line => Register.ParseString(line)).ToList();
-        }
         public static List<List<Register>> GroupedRegistersToDataExchange(List<Register> groupOfReg, int maxRegPerGroup)
         {
             List<List<Register>> resultGroups = new List<List<Register>>();
             ushort lastRegAddr = (ushort)(groupOfReg.First().Address - 1);
             List<Register> actualList = new List<Register>();
-            foreach (var reg in groupOfReg/*.Where(r=>r.AvailableIn == true)*/)
+            foreach (var reg in groupOfReg)
             {
                 if ((reg.Address == lastRegAddr + 1) && (actualList.Count < maxRegPerGroup))
                 {
@@ -87,6 +61,34 @@ namespace DriveControlLibrary
             resultGroups.Add(actualList);
             return resultGroups;
         }
+
+        private void generateMemory()
+        {
+            getActiveRegisters("ParametersCSV/DRV.csv", GroupDRV);
+            getActiveRegisters("ParametersCSV/FU1.csv", GroupF);
+            getActiveRegisters("ParametersCSV/FU2.csv", GroupH);
+            getActiveRegisters("ParametersCSV/I_O.csv", GroupI);
+            getActiveRegisters("ParametersCSV/CommonArea.csv", CommonArea);
+        }
+
+        private static List<Register> loadParametersFromCSV(string path)
+        {
+            return File.ReadAllLines(path)
+                       .Skip(1)
+                       .Where(line => line.Length > 1)
+                       .Select(line => Register.ParseString(line)).ToList();
+        }
+
+        private List<Register> getActiveRegisters(string path, List<Register> group)
+        {
+            List<Register> registers = loadParametersFromCSV(path);
+            foreach (var reg in registers)
+            {
+                if (reg.AvailableIn) group.Add(reg);
+            }
+            return registers;
+        }
+       
         public List<List<Register>> GroupedAllParamsToDataExchange(int maxRegPerGroup)
         {
             List<Register> list = new List<Register>();

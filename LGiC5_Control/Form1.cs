@@ -17,22 +17,18 @@ namespace LGiC5_Control
 {
     public partial class Form1 : Form
     {
-        //static LGdrive lgDrive;
 
-        //static IModbusSerialMaster master;
         FormSetup formSetup;
         FormKeyPad formKeypad;
         FormParameter formParameter;
-        //public static IModbusSerialMaster Master { get => master; set => master = value; }
-        //public static LGdrive LgDrive { get => lgDrive; set => lgDrive = value; }
         bool mouseDown;
         Point offset;
         public Form1()
         {
             InitializeComponent();
             formSetup = new FormSetup() { Dock = DockStyle.Fill, TopLevel = false, TopMost = true };
-            formKeypad = new FormKeyPad(formSetup.Locker) { Dock = DockStyle.Fill, TopLevel = false, TopMost = true };
-            formParameter = new FormParameter(formSetup.Locker) { Dock = DockStyle.Fill, TopLevel = false, TopMost = true };
+            formKeypad = new FormKeyPad() { Dock = DockStyle.Fill, TopLevel = false, TopMost = true };
+            formParameter = new FormParameter() { Dock = DockStyle.Fill, TopLevel = false, TopMost = true };
                    
             formSetup.RiseEdgeConnState += rTrigDriveIsConnected;
             formSetup.FallEdgeConnState += fTrigDriveIsDisconnected;
@@ -90,7 +86,7 @@ namespace LGiC5_Control
             //Włączanie timera aktualizacji sekcji Read/Write i ReadOnly.
             if (formSetup.IsConnectionCorrect)
             {
-                formKeypad.InitializeView();
+                formKeypad.InitializeDGV();
                 formKeypad.IsUpdateTimerRun(true);
             }
         }

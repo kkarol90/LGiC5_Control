@@ -10,48 +10,52 @@ namespace DriveControlLibrary
 {
     public class ModbusEventArgs : EventArgs
     {
-        public string MasterMssg { get; set; }
+        public string MasterMsg { get; set; }
         public bool ReadCorrectly { get; set; }
     }
-    public class DriveLibMaster
+    public class ModbusProvider
     {
         private static object locker;
         private IModbusSerialMaster master;
         private byte slaveAddr;
         private SerialPort port;
-        private static DriveLibMaster instance;
-        private int readTimeout;
-        private int writeTimeout;
-        public event EventHandler CommonAreaRead;
+        private static ModbusProvider instance;
+        public event EventHandler DataTransferred;
 
-        private DriveLibMaster() 
+        private ModbusProvider() 
         {
             locker = new object();
-            readTimeout = 200;
-            writeTimeout = 200;
+            master.Transport.ReadTimeout = 150;
+            master.Transport.WriteTimeout = 150;
         }
 
-        private void OnCommonAreaRead(EventArgs arg)
+        private void OnDataTransfer(EventArgs arg)
         {
-            CommonAreaRead?.Invoke(this, arg);
+            DataTransferred?.Invoke(this, arg);
         }
 
-        public static DriveLibMaster GetMaster()
+        public static ModbusProvider GetMaster()
         {
-            if (instance == null) instance = new DriveLibMaster();
+            if (instance == null) instance = new ModbusProvider();
             return instance;
         }
 
-        public void SetParameters(SerialPort port, byte slave)
+        public void SetParameters(SerialPort port, byte slaveAddr)
         {
             this.port = port;
-            this.slaveAddr = slave;
+            this.slaveAddr = slaveAddr;
             master = ModbusSerialMaster.CreateRtu(port);
+        }
+
+        public void SetTimeout(int readTimeout, int writeTimeout)
+        {
             master.Transport.ReadTimeout = readTimeout;
             master.Transport.WriteTimeout = writeTimeout;
         }
+
         public bool SendData(List<List<Register>> regGroups)
         {
+            if (regGroups == null) return false;
             return ConnectionProvider(() =>
             {
                 foreach (var gr in regGroups)
@@ -88,6 +92,7 @@ namespace DriveControlLibrary
                 master.WriteSingleRegister(slaveAddr, (ushort)(addr - 1), value);
             });
         }
+
         private bool ConnectionProvider(Action action)
         {
             ModbusEventArgs mea = new ModbusEventArgs();
@@ -106,14 +111,14 @@ namespace DriveControlLibrary
             catch (System.IO.IOException)
             {
                 mea.ReadCorrectly = false;
-                mea.MasterMssg = "Serial portconnection problem.\nCheck RS485 interface connection.";
+                mea.MasterMsg = "Serial portconnection problem.\nCheck RS485 interface connection.";
             }
             catch (Exception)
             {
                 mea.ReadCorrectly = false;
-                mea.MasterMssg = "Modbus communication fail.\ncommunication timed out";
+                mea.MasterMsg = "Modbus communication fail.\ncommunication timed out";
             }
-            DriveLibMaster.GetMaster().OnCommonAreaRead(mea);
+            ModbusProvider.GetMaster().OnDataTransfer(mea);
             return isReadCorrect;
         }
     }

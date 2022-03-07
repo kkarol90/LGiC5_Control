@@ -17,24 +17,23 @@ namespace LGiC5_Control
 {
     public partial class FormKeyPad : Form
     {
-        object locker = new object();
         static List<Register> readOnlySection;
         static List<Register> readWriteSection;       
-        int updateIntervalTime = 1000;
-        double[] intervalArray = { 0.5, 1, 1.5, 2, 3, 4, 5 };
+        int updateIntervalTime;
+        double[] intervalArray;
         bool isKeypadActive;
-        bool isReady = true;   
+        bool isKeypadReady;   
 
-        public FormKeyPad(object locker)
+        public FormKeyPad()
         {
             InitializeComponent();
-            
-            this.locker = locker;   
-
+            isKeypadReady = true;
+            updateIntervalTime = 1000;
+            intervalArray = new double[] { 0.5, 1, 1.5, 2, 3, 4, 5 };
             timer_UpdateSections.Interval = UpdateIntervalTime;
             cb_updateTime.DataSource = intervalArray;
             cb_updateTime.SelectedIndex = 1;
-            //Initial switch view
+            //Initial switch
             IsKeypadActive = false;
             //Initial knob
             knob_pot.LargeChange = 1000;
@@ -52,6 +51,7 @@ namespace LGiC5_Control
                 timer_UpdateSections.Interval = value;
             }
         }
+
         public bool IsKeypadActive
         {
             get => isKeypadActive;
@@ -78,50 +78,40 @@ namespace LGiC5_Control
             }
         }
 
-
-        private async void rBtn_stop_Click(object sender, EventArgs e)
+        private async void keyboardCommand(ushort addr, ushort value)
         {
-            if (!IsKeypadActive || !isReady) return;
-            isReady = false;
-            ushort addr = 6;
-            ushort value = 1;
-            await Task.Run(() => 
-            {
-                DriveLibMaster.GetMaster().SendSingleRegister(addr, value); 
-            });
-            isReady = true;
-            UpdateSections();
-        }
-
-        private async void knobControl_ValueChanged(object Sender)
-        {
-            if (!IsKeypadActive || !isReady) return;
-            isReady = false;
-            ushort addr = 5;
-            ushort value = (ushort)knob_pot.Value;
-
+            if (!IsKeypadActive || !isKeypadReady) return;
+            isKeypadReady = false;
             await Task.Run(() =>
             {
-                DriveLibMaster.GetMaster().SendSingleRegister(addr, value);
+                ModbusProvider.GetMaster().SendSingleRegister(addr, value);
             });
-            isReady = true;
+            isKeypadReady = true;
             UpdateSections();
         }
 
-        private async void rBtn_run_Click(object sender, EventArgs e)
+        private void rBtn_run_Click(object sender, EventArgs e)
         {
-            if (!IsKeypadActive || !isReady) return;
-            isReady = false;
             ushort addr = 6;
             ushort value;
             if (cb_reverse.Checked) value = 4;
             else value = 2;
-            await Task.Run(() =>
-            {
-                DriveLibMaster.GetMaster().SendSingleRegister(addr, value);
-            });
-            isReady = true;
-            UpdateSections();
+            keyboardCommand(addr, value);
+        }
+
+        private void rBtn_stop_Click(object sender, EventArgs e)
+        {
+            ushort addr = 6;
+            ushort value = 1;
+            keyboardCommand(addr, value);
+        }
+
+        private void knobControl_ValueChanged(object Sender)
+        {
+
+            ushort addr = 5;
+            ushort value = (ushort)knob_pot.Value;
+            keyboardCommand(addr, value);
         }
             
         internal void UpdateSections()
@@ -166,7 +156,6 @@ namespace LGiC5_Control
             checkBoxColSet.ValueType = typeof(Boolean);
             dgv_readWriteSection.Columns.Add(txtBoxColSetValue);
             dgv_readWriteSection.Columns.Add(checkBoxColSet);
-
             dgv_readWriteSection.Columns["Address"].Width = 45;
             dgv_readWriteSection.Columns["Address"].HeaderText = "Addr.";
             dgv_readWriteSection.Columns["Address"].ReadOnly = true;
@@ -175,7 +164,6 @@ namespace LGiC5_Control
             dgv_readWriteSection.Columns["Name"].ReadOnly = true;
             dgv_readWriteSection.Columns["Value"].Width = 50;
             dgv_readWriteSection.Columns["Value"].ReadOnly = true;
-
             dgv_readWriteSection.Columns["Code"].Visible = false;
             dgv_readWriteSection.Columns["FactoryDefault"].Visible = false;
             dgv_readWriteSection.Columns["DefaultVal"].Visible = false;
@@ -190,7 +178,6 @@ namespace LGiC5_Control
             {
                 dgv_readWriteSection.Rows[i].Cells["Setter"].Value = true;
             }
-
             dgv_readWriteSection.CurrentCell = null;
         }
 
@@ -207,7 +194,6 @@ namespace LGiC5_Control
             dgv_readOnlySection.Columns["ChangeableDuringWork"].Visible = false;
             dgv_readOnlySection.Columns["AvailableIn"].Visible = false;
             dgv_readOnlySection.Columns["Name"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-
             dgv_readOnlySection.Columns["Address"].Width = 45;
             dgv_readOnlySection.Columns["Address"].HeaderText = "Addr.";
             dgv_readOnlySection.Columns["Address"].ReadOnly = true;
@@ -242,8 +228,8 @@ namespace LGiC5_Control
 
             await Task.Run(() =>
             {
-                DriveLibMaster.GetMaster().SendData(ModbusMemory.GroupedRegistersToDataExchange(regList, 8));
-                DriveLibMaster.GetMaster().ReadData(ModbusMemory.GroupedRegistersToDataExchange(regList, 8));
+                ModbusProvider.GetMaster().SendData(ModbusMemory.GroupedRegistersToDataExchange(regList, 8));
+                ModbusProvider.GetMaster().ReadData(ModbusMemory.GroupedRegistersToDataExchange(regList, 8));
             });
             UpdateSections();
         }
@@ -280,7 +266,7 @@ namespace LGiC5_Control
             }
         }
 
-        internal void InitializeView()
+        internal void InitializeDGV()
         {          
             setKeypadVisible(true);
             dgv_readOnlySection.CurrentCell = null;

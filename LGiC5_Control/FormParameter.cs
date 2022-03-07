@@ -15,17 +15,15 @@ namespace LGiC5_Control
 {
     public partial class FormParameter : Form
     {
-        object locker;
         public enum ParameterArea { GroupDRV, GroupF, GroupH, GroupI};
         ParameterArea selectedArea;
         LGdrive currentDrive;
         DataGridView dgv;
         private bool firstCall;
 
-        public FormParameter(object locker)
+        public FormParameter()
         {
             InitializeComponent();
-            this.locker = locker;
             firstCall = true;
             menuInit();
             ParamsDisplayBox.ButtonAcceptClick += new EventHandler(this.DisplaySettingsAcceptClick);
@@ -39,7 +37,6 @@ namespace LGiC5_Control
         private void DisplaySettingsAcceptClick(object sender, EventArgs e)
         {
             if (currentDrive == null || dgv.DataSource == null) return;
-            //if(dgv == null) dgv = paramsMenu.GetDGV();
             dgv.Columns["Address"].Visible = ParamsDisplayBox.Selections[6];
             dgv.Columns["FactoryDefault"].Visible = ParamsDisplayBox.Selections[5];
             dgv.Columns["DefaultVal"].Visible = ParamsDisplayBox.Selections[4];
@@ -47,17 +44,6 @@ namespace LGiC5_Control
             dgv.Columns["Max"].Visible = ParamsDisplayBox.Selections[2];
             dgv.Columns["Min"].Visible = ParamsDisplayBox.Selections[1];
             dgv.Columns["ChangeableDuringWork"].Visible = ParamsDisplayBox.Selections[0];
-        }
-
-        internal async void ParameterFormIsSelected()
-        {
-            if (currentDrive == null) return;
-            //readParams(CurrentDrive.Memory.GroupedAllParamsToDataExchange(8));
-            await Task.Run(() =>
-            {
-                DriveLibMaster.GetMaster().ReadData(CurrentDrive.Memory.GroupedAllParamsToDataExchange(8));
-            });
-            RefreshValue();
         }
 
         private void menuInit()
@@ -73,35 +59,19 @@ namespace LGiC5_Control
             paramsMenu.ActionButtons[4].Click += new System.EventHandler(this.btn_5_Click);
         }
 
-        private void btn_5_Click(object sender, EventArgs e)
+        internal void ParameterFormIsSelected()
+        {
+            btn_2_Click(this, EventArgs.Empty);
+        }
+
+        private async void btn_1_Click(object sender, EventArgs e)
         {
             if (currentDrive == null) return;
-            foreach (DataGridViewColumn c in dgv.Columns)
+            await Task.Run(() =>
             {
-                c.SortMode = DataGridViewColumnSortMode.NotSortable;
-            }
-            dgv.SelectionMode = DataGridViewSelectionMode.FullColumnSelect;
-            foreach (DataGridViewColumn c in dgv.Columns)
-            {
-                if (c.Name == "Set" || c.Name == "Setter") continue;
-                if(c.Visible == true) c.Selected = true;
-            }
-
-            DataObject data = dgv.GetClipboardContent();
-            if(data != null) Clipboard.SetDataObject(data);
-            Microsoft.Office.Interop.Excel.Application xlApp = new Microsoft.Office.Interop.Excel.Application();
-            xlApp.Visible = true;
-            Microsoft.Office.Interop.Excel.Workbook xlWorkbook;
-            Microsoft.Office.Interop.Excel.Worksheet xlWorksheet;
-            object misedData = System.Reflection.Missing.Value;
-            xlWorkbook = xlApp.Workbooks.Add(misedData);
-
-            xlWorksheet = (Microsoft.Office.Interop.Excel.Worksheet)xlWorkbook.Worksheets.Item[1];
-            xlWorksheet.Cells.ColumnWidth = 15;
-            Microsoft.Office.Interop.Excel.Range xlr = (Microsoft.Office.Interop.Excel.Range)xlWorksheet.Cells[1, 1];
-            
-            xlr.Select();
-            xlWorksheet.PasteSpecial(xlr, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
+                ModbusProvider.GetMaster().ReadData(CurrentDrive.Memory.GroupedAllParamsToDataExchange(8));
+            });
+            RefreshValue();
         }
 
         private async void btn_2_Click(object sender, EventArgs e)
@@ -122,7 +92,7 @@ namespace LGiC5_Control
                     {
                         Register reg = dgv.Rows[i].DataBoundItem as Register;
                         dataToRead.Add(reg);
-                        dataToSend.Add(new Register((ushort)dgv.Rows[i].Cells["Address"].Value) { Value = result});
+                        dataToSend.Add(new Register((ushort)dgv.Rows[i].Cells["Address"].Value) { Value = result });
                         dgv.Rows[i].Cells["Set"].Value = null;
                         dgv.Rows[i].Cells["Setter"].Value = false;
                     }
@@ -130,10 +100,52 @@ namespace LGiC5_Control
             }
             if (dataToSend.Count > 0) await Task.Run(() =>
             {
-                DriveLibMaster.GetMaster().SendData(ModbusMemory.GroupedRegistersToDataExchange(dataToSend, 8));
-                DriveLibMaster.GetMaster().ReadData(ModbusMemory.GroupedRegistersToDataExchange(dataToRead,8));
+                ModbusProvider.GetMaster().SendData(ModbusMemory.GroupedRegistersToDataExchange(dataToSend, 8));
+                ModbusProvider.GetMaster().ReadData(ModbusMemory.GroupedRegistersToDataExchange(dataToRead, 8));
             });
             RefreshValue();
+        }
+
+        private void btn_3_Click(object sender, EventArgs e)
+        {
+            if (currentDrive == null) return;
+            ParamsDisplayBox.ShowDisplaySettings(this);
+        }
+
+        private void btn_5_Click(object sender, EventArgs e)
+        {
+            if (currentDrive == null) return;
+            foreach (DataGridViewColumn c in dgv.Columns)
+            {
+                c.SortMode = DataGridViewColumnSortMode.NotSortable;
+            }
+            dgv.SelectionMode = DataGridViewSelectionMode.FullColumnSelect;
+            foreach (DataGridViewColumn c in dgv.Columns)
+            {
+                if (c.Name == "Set" || c.Name == "Setter") continue;
+                if (c.Visible == true) c.Selected = true;
+            }
+
+            writeParametersToExcel();
+        }
+
+        private void writeParametersToExcel()
+        {
+            DataObject data = dgv.GetClipboardContent();
+            if (data != null) Clipboard.SetDataObject(data);
+            Microsoft.Office.Interop.Excel.Application xlApp = new Microsoft.Office.Interop.Excel.Application();
+            xlApp.Visible = true;
+            Microsoft.Office.Interop.Excel.Workbook xlWorkbook;
+            Microsoft.Office.Interop.Excel.Worksheet xlWorksheet;
+            object misedData = System.Reflection.Missing.Value;
+            xlWorkbook = xlApp.Workbooks.Add(misedData);
+
+            xlWorksheet = (Microsoft.Office.Interop.Excel.Worksheet)xlWorkbook.Worksheets.Item[1];
+            xlWorksheet.Cells.ColumnWidth = 15;
+            Microsoft.Office.Interop.Excel.Range xlr = (Microsoft.Office.Interop.Excel.Range)xlWorksheet.Cells[1, 1];
+
+            xlr.Select();
+            xlWorksheet.PasteSpecial(xlr, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
         }
 
         internal void OnDriveConnect(LGdrive drive)
@@ -148,17 +160,6 @@ namespace LGiC5_Control
             firstCall = true;
             paramsMenu.DataSource(null, null, null, null);
             dgv.Columns.Clear();
-        }
-
-        private void btn_1_Click(object sender, EventArgs e)
-        {
-            ParameterFormIsSelected();
-        }
-
-        private void btn_3_Click(object sender, EventArgs e)
-        {
-            if (currentDrive == null) return;
-            ParamsDisplayBox.ShowDisplaySettings(this);
         }
 
         internal void SetDataSource()
@@ -226,7 +227,6 @@ namespace LGiC5_Control
             dgv.Columns["Min"].Width = 50;
             dgv.Columns["ChangeableDuringWork"].ReadOnly = true;
             dgv.Columns["ChangeableDuringWork"].Width = 55;
-
             dgv.Columns["Set"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         }
     }

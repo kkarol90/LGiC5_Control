@@ -11,10 +11,11 @@ namespace DriveControlLibrary
     {
         public LGdrive()
         {            
-            this.Memory = new ModbusMemory(DriveModel.SV_iC5);
+            this.Memory = new ModbusMemory();
         }
         
         public ModbusMemory Memory { get; private set; }
+        public DriveModel Model { get; private set; }
 
     }
 }

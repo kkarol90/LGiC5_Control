@@ -14,22 +14,19 @@ using System.Threading;
 
 namespace LGiC5_Control
 {
-    public delegate void RiseTrig();
-    public delegate void FallTrig();
     public partial class FormSetup : Form
     {
-        object locker = new object();
-        public RiseTrig RiseEdgeConnState;
-        public FallTrig FallEdgeConnState;
+        public Action RiseEdgeConnState;
+        public Action FallEdgeConnState;
         static Parity parity;
         static int baud;
         static string com;
         static StopBits stopBits;
         static int bitData;
         static SerialPort port;
-        static int slaveAddr = -1;
+        static int slaveAddr;
         LGdrive lgDrive;
-        public static IModbusSerialMaster master;
+        //public static IModbusSerialMaster master;
         bool isConnectionCorrect;
         string[] comArray = { "COM1", "COM2", "COM3", "COM4",
                               "COM5", "COM6", "COM7", "COM8",
@@ -45,12 +42,13 @@ namespace LGiC5_Control
         {
             InitializeComponent();
             initializeComboBox();
+            slaveAddr = -1;
         }
 
         public static SerialPort Port { get => port; }
         public static int SlaveAddr { get => slaveAddr; }
         public LGdrive LgDrive { get => lgDrive; }
-        public static IModbusSerialMaster Master { get => master; }
+        //public static IModbusSerialMaster Master { get => master; }
         public bool IsConnectionCorrect
         {
             get => isConnectionCorrect;
@@ -68,7 +66,6 @@ namespace LGiC5_Control
                 }
             }
         }
-        public object Locker { get => locker; }
 
         private void initializeComboBox()
         {
@@ -135,10 +132,9 @@ namespace LGiC5_Control
 
         private void portDetailsAndSlaveAddrReset()
         {
-
             lgDrive = null;
             port = null;
-            master = null;
+            //master = null;
             slaveAddr = -1;
 
             lbl_port.Text = "....................";
@@ -158,7 +154,8 @@ namespace LGiC5_Control
             }
             else
             {
-                MessageBox.Show("Not slave address has been entered.", "Attention!", MessageBoxButtons.OK);
+                MessageBox.Show("Not slave address has been entered."
+                    , "Attention!", MessageBoxButtons.OK);
             }
         }
 
@@ -166,14 +163,15 @@ namespace LGiC5_Control
         {
             if (port == null || slaveAddr == -1)
             {
-                MessageBox.Show("Not all connection parameters have been selected.", "Attention!", MessageBoxButtons.OK);
+                MessageBox.Show("Not all connection parameters have been selected."
+                    , "Attention!", MessageBoxButtons.OK);
                 return;
             }
             if (!isConnectionCorrect)
             {
                 lgDrive = new LGdrive();
                 createMaster(200, 200);
-                if (DriveLibMaster.GetMaster().ReadData(lgDrive.Memory.GetCommonAreaToDataExchange()))
+                if (ModbusProvider.GetMaster().ReadData(lgDrive.Memory.GetCommonAreaToDataExchange()))
                     SetConnectionState();
             }
             else SetDisconnectionState();
@@ -181,8 +179,10 @@ namespace LGiC5_Control
 
         private void createMaster(int readTimeout, int writeTimeout)
         {
-            DriveLibMaster.GetMaster().SetParameters(port, (byte)slaveAddr);
-            DriveLibMaster.GetMaster().CommonAreaRead += CommonAreaReadResult;
+            ModbusProvider.GetMaster().SetParameters(port, (byte)slaveAddr);
+            ModbusProvider.GetMaster().SetTimeout(readTimeout, writeTimeout);
+            ModbusProvider.GetMaster().DataTransferred += CommonAreaReadResult;
+            
         }
 
         private void CommonAreaReadResult(object sender, EventArgs arg)
@@ -192,14 +192,14 @@ namespace LGiC5_Control
             if (!mea.ReadCorrectly)
             {               
                 BeginInvoke((Action)(() => { SetDisconnectionState(); }));
-                MessageBox.Show(mea.MasterMssg, "Attention!");
+                MessageBox.Show(mea.MasterMsg, "Attention!");
             }
         }
 
         public void SetDisconnectionState()
         {
             timerCheckConnection.Enabled = false;
-            DriveLibMaster.GetMaster().CommonAreaRead -= CommonAreaReadResult;
+            ModbusProvider.GetMaster().DataTransferred -= CommonAreaReadResult;
             btn_setSetupPort.Visible = true;
             btn_setSlaveID.Visible = true;
             IsConnectionCorrect = false;
@@ -242,7 +242,7 @@ namespace LGiC5_Control
             timerCheckConnection.Enabled = false;
             await Task.Run(() =>
             {
-                if (DriveLibMaster.GetMaster().ReadData(lgDrive?.Memory.GetCommonAreaToDataExchange()))
+                if (ModbusProvider.GetMaster().ReadData(lgDrive?.Memory.GetCommonAreaToDataExchange()))
                     BeginInvoke((Action)(() => timerCheckConnection.Enabled = true));
             });
         }
