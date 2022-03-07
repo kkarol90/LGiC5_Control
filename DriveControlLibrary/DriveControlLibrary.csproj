@@ -44,11 +44,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="IC5Menu.cs" />
-    <Compile Include="MenuNode.cs" />
-    <Compile Include="MenuTree.cs" />
     <Compile Include="LGdrive.cs" />
-    <Compile Include="SmallMenu.cs" />
     <Compile Include="DriveLibMaster.cs" />
     <Compile Include="ModbusMemory.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

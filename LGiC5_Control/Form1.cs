@@ -60,6 +60,7 @@ namespace LGiC5_Control
             {
                 formParameter.ParameterFormIsSelected();
             }
+
             formKeypad.IsUpdateTimerRun(false);
             panel_chosen.Location = new Point(0, 189);
             panel_chosen.BackColor = Color.FromArgb(0, 126, 249);

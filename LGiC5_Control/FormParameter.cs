@@ -55,7 +55,7 @@ namespace LGiC5_Control
             //readParams(CurrentDrive.Memory.GroupedAllParamsToDataExchange(8));
             await Task.Run(() =>
             {
-                DriveLibMaster.GetMaster().ReadData(CurrentDrive.Memory.AllParams);
+                DriveLibMaster.GetMaster().ReadData(CurrentDrive.Memory.GroupedAllParamsToDataExchange(8));
             });
             RefreshValue();
         }
@@ -130,31 +130,10 @@ namespace LGiC5_Control
             }
             if (dataToSend.Count > 0) await Task.Run(() =>
             {
-                DriveLibMaster.GetMaster().SendData(dataToSend);
-                DriveLibMaster.GetMaster().ReadData(dataToRead);
+                DriveLibMaster.GetMaster().SendData(ModbusMemory.GroupedRegistersToDataExchange(dataToSend, 8));
+                DriveLibMaster.GetMaster().ReadData(ModbusMemory.GroupedRegistersToDataExchange(dataToRead,8));
             });
             RefreshValue();
-            /*if (currentDrive == null || dgv.DataSource == null) return;
-            dataToSend = new Dictionary<ushort, ushort>();
-            string s;
-
-            for (int i = 0; i < dgv.Rows.Count; i++)
-            {
-                if (dgv.Rows[i].Cells["Setter"].Value == null) continue;
-                if ((bool)(dgv.Rows[i].Cells["Setter"].Value) == true
-                    && (string)dgv.Rows[i].Cells["Set"].Value != null)
-                {
-                    s = dgv.Rows[i].Cells["Set"].Value.ToString();
-                    ushort result;
-                    if (ushort.TryParse(s, out result))
-                    {
-                        dataToSend.Add((ushort)dgv.Rows[i].Cells["Address"].Value, result);
-                        dgv.Rows[i].Cells["Set"].Value = null;
-                        dgv.Rows[i].Cells["Setter"].Value = false;
-                    }
-                }
-            }
-            if (dataToSend.Count > 0) writeParams(dataToSend, true);*/
         }
 
         internal void OnDriveConnect(LGdrive drive)
@@ -250,46 +229,5 @@ namespace LGiC5_Control
 
             dgv.Columns["Set"].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
         }
-
-        //private async void writeParams(Dictionary<ushort, ushort> data, bool refreshData)
-        //{
-        //    await Task.Run(() =>
-        //    {
-        //        lock (locker)
-        //        {
-        //            FormSetup.Port.Open();
-        //            foreach (var d in data)
-        //            {
-        //                FormSetup.Master.WriteSingleRegister((byte)FormSetup.SlaveAddr, (ushort)(d.Key - 1), d.Value);
-        //            }
-        //            FormSetup.Port.Close();
-        //        }
-        //    });
-        //    if (refreshData) readParams(CurrentDrive.Memory.GroupedAllParamsToDataExchange(8));
-        //}
-        //private async void readParams(List<List<Register>> regList)
-        //{
-        //    await Task.Run(() =>
-        //    {
-        //        lock (locker)
-        //        {
-        //            FormSetup.Port.Open();
-        //            foreach (var list in regList)
-        //            {
-        //                ushort[] tempArray = new ushort[list.Count];
-        //                ushort startFrom = (ushort)(list.First().Address - 1);
-        //                ushort length = (ushort)list.Count;
-        //                FormSetup.Master.ReadHoldingRegisters((byte)FormSetup.SlaveAddr, startFrom, length).CopyTo(tempArray, 0);
-        //                for (int i = 0; i < list.Count; i++)
-        //                {
-        //                    list[i].Value = tempArray[i];
-        //                }
-        //            }
-        //            FormSetup.Port.Close();
-        //        }
-        //    });
-        //    RefreshValue();
-        //}
-
     }
 }

@@ -23,9 +23,7 @@ namespace LGiC5_Control
         int updateIntervalTime = 1000;
         double[] intervalArray = { 0.5, 1, 1.5, 2, 3, 4, 5 };
         bool isKeypadActive;
-        bool isReady = true;
-        ushort[] dataCommAreaToSend;
-        List<ushort> dataKeypadToSend;      
+        bool isReady = true;   
 
         public FormKeyPad(object locker)
         {
@@ -38,7 +36,6 @@ namespace LGiC5_Control
             cb_updateTime.SelectedIndex = 1;
             //Initial switch view
             IsKeypadActive = false;
-            DataKeypadToSend =new List<ushort>();
             //Initial knob
             knob_pot.LargeChange = 1000;
             knob_pot.Minimum = 0;
@@ -46,8 +43,6 @@ namespace LGiC5_Control
             ResetView();
         }
 
-        public ushort[] DataCommAreaToSend { get => dataCommAreaToSend; set => dataCommAreaToSend = value; }
-        public List<ushort> DataKeypadToSend { get => dataKeypadToSend; set => dataKeypadToSend = value; }
         public int UpdateIntervalTime
         {
             get => updateIntervalTime;
@@ -96,13 +91,6 @@ namespace LGiC5_Control
             });
             isReady = true;
             UpdateSections();
-            //if (!IsKeypadActive || DataKeypadToSend.Count != 0) return;
-            //ushort addr = 6;
-            //ushort value = 1;
-
-            //DataKeypadToSend.Add(addr);
-            //DataKeypadToSend.Add(value);
-            //sendKeypadData();
         }
 
         private async void knobControl_ValueChanged(object Sender)
@@ -118,15 +106,6 @@ namespace LGiC5_Control
             });
             isReady = true;
             UpdateSections();
-            //if (!IsKeypadActive || DataKeypadToSend.Count != 0) return;
-
-            //ushort addr = 5;
-            //ushort value = (ushort)knob_pot.Value;
-
-            //DataKeypadToSend.Add(addr);
-            //DataKeypadToSend.Add(value);
-            //sendKeypadData();
-            //rtb_display.Text =String.Format("{0:D2}.{1:D2}", (value / 100), value % 100);
         }
 
         private async void rBtn_run_Click(object sender, EventArgs e)
@@ -143,15 +122,6 @@ namespace LGiC5_Control
             });
             isReady = true;
             UpdateSections();
-            //if (!IsKeypadActive || DataKeypadToSend.Count != 0) return;
-            //ushort addr = 6;
-            //ushort value;
-            //if(cb_reverse.Checked) value = 4;
-            //else value = 2;
-
-            //DataKeypadToSend.Add(addr);
-            //DataKeypadToSend.Add(value);
-            //sendKeypadData();
         }
             
         internal void UpdateSections()
@@ -272,29 +242,10 @@ namespace LGiC5_Control
 
             await Task.Run(() =>
             {
-                DriveLibMaster.GetMaster().SendData(regList);
-                DriveLibMaster.GetMaster().ReadCommonArea();
+                DriveLibMaster.GetMaster().SendData(ModbusMemory.GroupedRegistersToDataExchange(regList, 8));
+                DriveLibMaster.GetMaster().ReadData(ModbusMemory.GroupedRegistersToDataExchange(regList, 8));
             });
             UpdateSections();
-            //dataCommAreaToSend =new ushort[5];
-            //string s;
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    if ((bool)(dgv_readWriteSection.Rows[i].Cells["Setter"].Value) == true
-            //        && (string)dgv_readWriteSection.Rows[i].Cells["Set"].Value != null)        
-            //    {
-            //            s = dgv_readWriteSection.Rows[i].Cells["Set"].Value.ToString();
-            //            dataCommAreaToSend[i] = ushort.Parse(s);
-            //            dgv_readWriteSection.Rows[i].Cells["Set"].Value = null;
-            //            dgv_readWriteSection.Rows[i].Cells["Setter"].Value = false;
-            //    }
-            //    else
-            //    {
-            //        s = dgv_readWriteSection.Rows[i].Cells["Value"].Value.ToString();
-            //        dataCommAreaToSend[i] = ushort.Parse(s);
-            //    }
-            //}
-            //sendCommAreaData();
         }
 
         private void timerUpdateSections_Tick(object sender, EventArgs e)
@@ -371,41 +322,5 @@ namespace LGiC5_Control
             knob_pot.Visible = state;
             cb_reverse.Visible = state;
         }
-
-        private async void sendCommAreaData()
-        {
-            await Task.Run(() =>
-            {
-                if (DataCommAreaToSend != null)
-                {
-                    lock (locker)
-                    {
-                        FormSetup.Port.Open();
-                        FormSetup.Master.WriteMultipleRegisters((byte)FormSetup.SlaveAddr, 3, DataCommAreaToSend);
-                        FormSetup.Port.Close();
-                    }
-                    DataCommAreaToSend = null;
-                }
-            });
-            UpdateSections();
-        }
-
-        //private async void sendKeypadData()
-        //{
-        //    await Task.Run(() =>
-        //    {
-        //        if (DataKeypadToSend.Count != 0)
-        //        {
-        //            lock (locker)
-        //            {
-        //                FormSetup.Port.Open();
-        //                FormSetup.Master.WriteSingleRegister((byte)FormSetup.SlaveAddr, (ushort)(DataKeypadToSend[0] - 1), DataKeypadToSend[1]);
-        //                FormSetup.Port.Close();
-        //            }
-        //            DataKeypadToSend.Clear();
-        //        }
-        //    });
-        //    UpdateSections();
-        //}
     }
 }

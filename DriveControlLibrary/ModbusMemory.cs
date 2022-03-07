@@ -65,7 +65,7 @@ namespace DriveControlLibrary
                        .Where(line => line.Length > 1)
                        .Select(line => Register.ParseString(line)).ToList();
         }
-        public List<List<Register>> GroupedRegistersToDataExchange(List<Register> groupOfReg, int maxRegPerGroup)
+        public static List<List<Register>> GroupedRegistersToDataExchange(List<Register> groupOfReg, int maxRegPerGroup)
         {
             List<List<Register>> resultGroups = new List<List<Register>>();
             ushort lastRegAddr = (ushort)(groupOfReg.First().Address - 1);

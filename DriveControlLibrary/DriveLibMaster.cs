@@ -10,61 +10,63 @@ namespace DriveControlLibrary
 {
     public class ModbusEventArgs : EventArgs
     {
-        public string CommonAreaReadMsg { get; set; }
-        public bool CommonAreaReadCorrectly { get; set; }
+        public string MasterMssg { get; set; }
+        public bool ReadCorrectly { get; set; }
     }
     public class DriveLibMaster
     {
-        private static object locker = new object();
-        private LGdrive drive;
+        private static object locker;
         private IModbusSerialMaster master;
         private byte slaveAddr;
         private SerialPort port;
         private static DriveLibMaster instance;
-        private int readTimeout = 200;
-        private int writeTimeout = 200;
+        private int readTimeout;
+        private int writeTimeout;
         public event EventHandler CommonAreaRead;
 
-        private DriveLibMaster() { }
+        private DriveLibMaster() 
+        {
+            locker = new object();
+            readTimeout = 200;
+            writeTimeout = 200;
+        }
 
         private void OnCommonAreaRead(EventArgs arg)
         {
             CommonAreaRead?.Invoke(this, arg);
         }
+
         public static DriveLibMaster GetMaster()
         {
             if (instance == null) instance = new DriveLibMaster();
             return instance;
         }
-        public void SetParameters(SerialPort port, byte slave, LGdrive drive)
+
+        public void SetParameters(SerialPort port, byte slave)
         {
             this.port = port;
             this.slaveAddr = slave;
             master = ModbusSerialMaster.CreateRtu(port);
             master.Transport.ReadTimeout = readTimeout;
             master.Transport.WriteTimeout = writeTimeout;
-            this.drive = drive;
         }
-        public void SendData(List<Register> regList)
+        public bool SendData(List<List<Register>> regGroups)
         {
-            List<List<Register>> regGroups = drive.Memory.GroupedRegistersToDataExchange(regList, 8);
-            lock (locker)
+            return ConnectionProvider(() =>
             {
-                port.Open();
                 foreach (var gr in regGroups)
                 {
-                    master.WriteMultipleRegisters(slaveAddr,(ushort)(gr.First().Address-1)
+                    master.WriteMultipleRegisters(slaveAddr, (ushort)(gr.First().Address - 1)
                         , gr.Select(x => x.Value).ToArray());
                 }
-                port.Close();
-            }
+            });
         }
-        public void ReadData(List<Register> regList)
+
+        public bool ReadData(List<List<Register>> regGroups)
         {
-            List<List<Register>> regGroups = drive.Memory.GroupedRegistersToDataExchange(regList, 8);
-            lock (locker)
+            if (regGroups == null)  return false;
+            return ConnectionProvider(() =>
             {
-                port.Open();
                 foreach (var gr in regGroups)
                 {
                     ushort[] tempArray = new ushort[gr.Count];
@@ -76,57 +78,43 @@ namespace DriveControlLibrary
                         gr[i].Value = tempArray[i];
                     }
                 }
-                port.Close();
-            }
+            });
         }
-        public bool ReadCommonArea()
+
+        public bool SendSingleRegister(ushort addr, ushort value)
+        {
+            return ConnectionProvider(() =>
+            {
+                master.WriteSingleRegister(slaveAddr, (ushort)(addr - 1), value);
+            });
+        }
+        private bool ConnectionProvider(Action action)
         {
             ModbusEventArgs mea = new ModbusEventArgs();
             bool isReadCorrect = false;
             try
             {
-                List<ushort> holdingRegistersValue = new List<ushort>();
-                List<List<Register>> l = drive.Memory.GetCommonAreaToDataExchange();
                 lock (locker)
-                {                  
+                {
                     port.Open();
-                    foreach (var data in drive.Memory.GetCommonAreaToDataExchange())
-                    {
-                        holdingRegistersValue.AddRange(master.ReadHoldingRegisters(slaveAddr
-                            , (ushort)(data.First().Address - 1), (ushort)data.Count));
-                    }
-                    port.Close();
-                    for (int i = 0; i < drive.Memory.CommonArea.Count - 1; i++)
-                    {
-                        drive.Memory.CommonArea[i + 1].Value = holdingRegistersValue[i];
-                    }
+                    action();
+                    port.Close();                    
                 }
-                mea.CommonAreaReadMsg = "Common area read correctly.";
-                mea.CommonAreaReadCorrectly = true;
+                mea.ReadCorrectly = true;
                 isReadCorrect = true;
             }
             catch (System.IO.IOException)
             {
-                mea.CommonAreaReadCorrectly = false;
-                mea.CommonAreaReadMsg = "Serial portconnection problem.\nCheck RS485 interface connection.";
+                mea.ReadCorrectly = false;
+                mea.MasterMssg = "Serial portconnection problem.\nCheck RS485 interface connection.";
             }
             catch (Exception)
             {
-                mea.CommonAreaReadCorrectly = false;
-                mea.CommonAreaReadMsg = "Modbus communication fail.\ncommunication timed out";
+                mea.ReadCorrectly = false;
+                mea.MasterMssg = "Modbus communication fail.\ncommunication timed out";
             }
-                DriveLibMaster.GetMaster().OnCommonAreaRead(mea);
-                return isReadCorrect;        
-        }
-
-        public void SendSingleRegister(ushort addr, ushort value)
-        {
-            lock (locker)
-            {
-                port.Open();
-                master.WriteSingleRegister(slaveAddr, (ushort)(addr-1), value);
-                port.Close();
-            }
+            DriveLibMaster.GetMaster().OnCommonAreaRead(mea);
+            return isReadCorrect;
         }
     }
 }

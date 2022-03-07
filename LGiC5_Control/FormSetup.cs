@@ -45,7 +45,7 @@ namespace LGiC5_Control
         {
             InitializeComponent();
             initializeComboBox();
-        }      
+        }
 
         public static SerialPort Port { get => port; }
         public static int SlaveAddr { get => slaveAddr; }
@@ -135,13 +135,12 @@ namespace LGiC5_Control
 
         private void portDetailsAndSlaveAddrReset()
         {
-            lock (locker)
-            {
-                lgDrive = null;
-                port = null;
-                master = null;
-                slaveAddr = -1;
-            }
+
+            lgDrive = null;
+            port = null;
+            master = null;
+            slaveAddr = -1;
+
             lbl_port.Text = "....................";
             lbl_baud.Text = "....................";
             lbl_dataBit.Text = "....................";
@@ -174,14 +173,15 @@ namespace LGiC5_Control
             {
                 lgDrive = new LGdrive();
                 createMaster(200, 200);
-                if (DriveLibMaster.GetMaster().ReadCommonArea()) SetConnectionState();
+                if (DriveLibMaster.GetMaster().ReadData(lgDrive.Memory.GetCommonAreaToDataExchange()))
+                    SetConnectionState();
             }
             else SetDisconnectionState();
         }
 
         private void createMaster(int readTimeout, int writeTimeout)
         {
-            DriveLibMaster.GetMaster().SetParameters(port, (byte)slaveAddr, lgDrive);
+            DriveLibMaster.GetMaster().SetParameters(port, (byte)slaveAddr);
             DriveLibMaster.GetMaster().CommonAreaRead += CommonAreaReadResult;
         }
 
@@ -189,17 +189,17 @@ namespace LGiC5_Control
         {
             ModbusEventArgs mea = (ModbusEventArgs)arg;
 
-            if(!mea.CommonAreaReadCorrectly)
-            {
-                DriveLibMaster.GetMaster().CommonAreaRead -= CommonAreaReadResult;
-                BeginInvoke((Action)(()=> { SetDisconnectionState(); }));
-                MessageBox.Show(mea.CommonAreaReadMsg, "EA Attention!");
+            if (!mea.ReadCorrectly)
+            {               
+                BeginInvoke((Action)(() => { SetDisconnectionState(); }));
+                MessageBox.Show(mea.MasterMssg, "Attention!");
             }
         }
 
         public void SetDisconnectionState()
         {
             timerCheckConnection.Enabled = false;
+            DriveLibMaster.GetMaster().CommonAreaRead -= CommonAreaReadResult;
             btn_setSetupPort.Visible = true;
             btn_setSlaveID.Visible = true;
             IsConnectionCorrect = false;
@@ -227,56 +227,6 @@ namespace LGiC5_Control
 
         }
 
-        //private static bool executeWithTimeLimit(TimeSpan timeSpan, Action timeLimitedBlock)
-        //{
-        //    try
-        //    {
-        //        Task task = Task.Factory.StartNew(() => timeLimitedBlock());
-        //        task.Wait(timeSpan);
-        //        return task.IsCompleted;
-        //    }
-        //    catch (Exception)
-        //    {
-        //        return false;
-        //    }
-        //}
-
-        //public bool ReadCommonArea()
-        //{
-        //    try
-        //    {
-        //        List<ushort> holdingRegistersValue = new List<ushort>();
-        //        lock (locker)
-        //        {
-        //            List<List<Register>> l = lgDrive.Memory.GetCommonAreaToDataExchange();
-        //            Port.Open();
-        //            foreach (var data in lgDrive.Memory.GetCommonAreaToDataExchange())
-        //            {
-        //                holdingRegistersValue.AddRange(Master.ReadHoldingRegisters((byte)SlaveAddr, (ushort)(data.First().Address-1), (ushort)data.Count));
-        //            }
-        //            Port.Close();
-        //            for (int i = 0; i < lgDrive.Memory.CommonArea.Count-1; i++)
-        //            {
-        //                lgDrive.Memory.CommonArea[i+1].Value = holdingRegistersValue[i];
-        //            }
-        //        }
-        //        return true;
-        //    }       
-        //    catch (System.IO.IOException)
-        //    {
-        //        BeginInvoke((Action)(() => SetDisconnectionState()));
-        //        MessageBox.Show("Serial portconnection problem.\nCheck RS485 interface connection.", "Attention!", MessageBoxButtons.OK);
-        //        return false;
-        //    }
-        //    catch (Exception)
-        //    {
-        //        BeginInvoke((Action)(() => SetDisconnectionState()));
-        //        MessageBox.Show("Modbus communication fail.\ncommunication timed out", "Attention!", MessageBoxButtons.OK);
-        //        return false;
-        //    }
-                
-        //}
-        
         private void btn_lastSettings_Click(object sender, EventArgs e)
         {
             cb_commPort.SelectedIndex = 14;
@@ -292,9 +242,8 @@ namespace LGiC5_Control
             timerCheckConnection.Enabled = false;
             await Task.Run(() =>
             {
-                if(DriveLibMaster.GetMaster().ReadCommonArea())
-                //if(ReadCommonArea())
-                BeginInvoke((Action)(() => timerCheckConnection.Enabled = true));
+                if (DriveLibMaster.GetMaster().ReadData(lgDrive?.Memory.GetCommonAreaToDataExchange()))
+                    BeginInvoke((Action)(() => timerCheckConnection.Enabled = true));
             });
         }
     }
