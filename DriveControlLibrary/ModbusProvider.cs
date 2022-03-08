@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace DriveControlLibrary
 {
@@ -25,34 +23,29 @@ namespace DriveControlLibrary
         private ModbusProvider() 
         {
             locker = new object();
-            master.Transport.ReadTimeout = 150;
-            master.Transport.WriteTimeout = 150;
         }
 
         private void OnDataTransfer(EventArgs arg)
         {
             DataTransferred?.Invoke(this, arg);
         }
-
         public static ModbusProvider GetMaster()
         {
             if (instance == null) instance = new ModbusProvider();
             return instance;
         }
-
         public void SetParameters(SerialPort port, byte slaveAddr)
         {
             this.port = port;
             this.slaveAddr = slaveAddr;
             master = ModbusSerialMaster.CreateRtu(port);
         }
-
         public void SetTimeout(int readTimeout, int writeTimeout)
         {
+            if (master == null) return;
             master.Transport.ReadTimeout = readTimeout;
             master.Transport.WriteTimeout = writeTimeout;
         }
-
         public bool SendData(List<List<Register>> regGroups)
         {
             if (regGroups == null) return false;
@@ -65,7 +58,6 @@ namespace DriveControlLibrary
                 }
             });
         }
-
         public bool ReadData(List<List<Register>> regGroups)
         {
             if (regGroups == null)  return false;
@@ -84,7 +76,6 @@ namespace DriveControlLibrary
                 }
             });
         }
-
         public bool SendSingleRegister(ushort addr, ushort value)
         {
             return ConnectionProvider(() =>
@@ -92,7 +83,6 @@ namespace DriveControlLibrary
                 master.WriteSingleRegister(slaveAddr, (ushort)(addr - 1), value);
             });
         }
-
         private bool ConnectionProvider(Action action)
         {
             ModbusEventArgs mea = new ModbusEventArgs();
@@ -110,11 +100,13 @@ namespace DriveControlLibrary
             }
             catch (System.IO.IOException)
             {
+                port.Close();
                 mea.ReadCorrectly = false;
                 mea.MasterMsg = "Serial portconnection problem.\nCheck RS485 interface connection.";
             }
             catch (Exception)
             {
+                port.Close();
                 mea.ReadCorrectly = false;
                 mea.MasterMsg = "Modbus communication fail.\ncommunication timed out";
             }

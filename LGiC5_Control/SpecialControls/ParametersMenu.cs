@@ -1,12 +1,7 @@
 ﻿using DriveControlLibrary;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace LGiC5_Control.SpecialControls
@@ -14,13 +9,16 @@ namespace LGiC5_Control.SpecialControls
     public partial class ParametersMenu : UserControl
     {
         public event EventHandler ContentSwitched;
-        private int numberOfActiveBtns = 10;
-        List<Button> actionButtons;
+        private int numberOfActiveBtns;
+        private List<Button> actionButtons;
+
         public ParametersMenu()
         {
             InitializeComponent();
             actionButtons = new List<Button>();
+            numberOfActiveBtns = 10;
         }
+
         public List<Button> ActionButtons
         {
             get => actionButtons;
@@ -54,7 +52,6 @@ namespace LGiC5_Control.SpecialControls
                             btn.Visible = true;
                             btn.Width = panel_actions.Width / value;
                             btn.Enabled = true;
-                            //ActionButtons.Add(btn);
                             ActionButtons.Insert(0, btn);
                         }
                         else
@@ -69,7 +66,24 @@ namespace LGiC5_Control.SpecialControls
             } 
         }
 
-        protected virtual void OnContentSwitched(EventArgs e)
+        public void DataSource(List<Register> drv, List<Register> f, List<Register> h, List<Register> i)
+        {
+            DRV_groupDataSource = drv;
+            F_groupDataSource = f;
+            H_groupDataSource = h;
+            I_groupDataSource = i;
+        }
+        public void RefreshValue()
+        {
+            if (dgv_content.DataSource == null) return;
+            dgv_content.InvalidateColumn(dgv_content.Columns["Value"].Index);
+            dgv_content.Update();
+        }
+        public DataGridView GetDGV()
+        {
+            return dgv_content;
+        }
+        private void OnContentSwitched(EventArgs e)
         {
             ContentSwitched?.Invoke(this, e);
         }
@@ -116,30 +130,7 @@ namespace LGiC5_Control.SpecialControls
                         break;
                 }
                 OnContentSwitched(EventArgs.Empty);
-                
-                //RefreshValue();
             }
-        }
-        
-        public void DataSource(List<Register> drv, List<Register> f, List<Register> h, List<Register> i)
-        {
-            DRV_groupDataSource = drv;
-            F_groupDataSource = f;
-            H_groupDataSource = h;
-            I_groupDataSource = i;        
-        }
-
-        public void RefreshValue()
-        {
-            if (dgv_content.DataSource == null) return;
-            dgv_content.InvalidateColumn(dgv_content.Columns["Value"].Index);
-            dgv_content.Update();
-        }
-        
-        public DataGridView GetDGV()
-        {
-            return dgv_content;
-        }
-        
+        }       
     }
 }

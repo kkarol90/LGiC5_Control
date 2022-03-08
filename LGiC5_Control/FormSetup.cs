@@ -1,55 +1,48 @@
 ﻿using DriveControlLibrary;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
+using System.IO;
 using System.IO.Ports;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using Modbus.Device;
-using System.Threading;
 
 namespace LGiC5_Control
 {
-    public partial class FormSetup : Form
+    internal partial class FormSetup : Form
     {
         public Action RiseEdgeConnState;
         public Action FallEdgeConnState;
-        static Parity parity;
-        static int baud;
-        static string com;
-        static StopBits stopBits;
-        static int bitData;
-        static SerialPort port;
-        static int slaveAddr;
-        LGdrive lgDrive;
-        //public static IModbusSerialMaster master;
-        bool isConnectionCorrect;
-        string[] comArray = { "COM1", "COM2", "COM3", "COM4",
-                              "COM5", "COM6", "COM7", "COM8",
-                              "COM9", "COM10", "COM11", "COM12",
-                              "COM13", "COM14", "COM15", "COM16"};
-        int[] baudArray = { 1200, 2400, 4800, 9600, 19200 };
-        int[] dataBitArray = { 8 };
-        string[] parityArray = { "None", "Even", "Mark", "Odd", "Space" };
-        string[] stopBitsArray = { "1", "1.5", "2" };
-        int[] slaveAddrArray = new int[33];
+        private static Parity parity;
+        private static int baud;
+        private static string com;
+        private static StopBits stopBits;
+        private static int bitData;
+        private static SerialPort port;
+        private static int slaveAddr;
+        private LGdrive lgDrive;
+        private bool isConnectionCorrect;
+        private readonly string lastSettingsPath = "LastCommSettings.txt";
+        private string[] comArray = { "COM1", "COM2", "COM3", "COM4",
+                                      "COM5", "COM6", "COM7", "COM8",
+                                      "COM9", "COM10", "COM11", "COM12",
+                                      "COM13", "COM14", "COM15", "COM16" };
+        private int[] baudArray = { 1200, 2400, 4800, 9600, 19200 };
+        private int[] dataBitArray = { 8 };
+        private string[] parityArray = { "None", "Even", "Mark", "Odd", "Space" };
+        private string[] stopBitsArray = { "1", "1.5", "2" };
+        private int[] slaveAddrArray = new int[33];
 
-        public FormSetup()
+        internal FormSetup()
         {
             InitializeComponent();
             initializeComboBox();
             slaveAddr = -1;
         }
 
-        public static SerialPort Port { get => port; }
-        public static int SlaveAddr { get => slaveAddr; }
-        public LGdrive LgDrive { get => lgDrive; }
-        //public static IModbusSerialMaster Master { get => master; }
-        public bool IsConnectionCorrect
+        internal static SerialPort Port { get => port; }
+        internal static int SlaveAddr { get => slaveAddr; }
+        internal LGdrive LgDrive { get => lgDrive; }
+        internal bool IsConnectionCorrect
         {
             get => isConnectionCorrect;
             set
@@ -84,7 +77,6 @@ namespace LGiC5_Control
             cb_stopBit.SelectedIndex = -1;
             cb_slaveAddr.SelectedIndex = -1;
         }
-
         private void btn_serialPort_SET_Click(object sender, EventArgs e)
         {
             if ((cb_commPort.SelectedIndex == -1) || (cb_commBaud.SelectedIndex == -1)
@@ -114,7 +106,6 @@ namespace LGiC5_Control
             }
             portDetailsSet();
         }
-
         private void portDetailsSet()
         {
             port = new SerialPort(com);
@@ -129,12 +120,10 @@ namespace LGiC5_Control
             lbl_parityBit.Text = parity.ToString();
             lbl_stopBit.Text = stopBits.ToString();
         }
-
         private void portDetailsAndSlaveAddrReset()
         {
             lgDrive = null;
             port = null;
-            //master = null;
             slaveAddr = -1;
 
             lbl_port.Text = "....................";
@@ -144,7 +133,6 @@ namespace LGiC5_Control
             lbl_stopBit.Text = "....................";
             lbl_slaveID.Text = "....................";
         }
-
         private void btn_slaveID_SET_Click(object sender, EventArgs e)
         {
             if (cb_slaveAddr.SelectedIndex != -1)
@@ -158,7 +146,6 @@ namespace LGiC5_Control
                     , "Attention!", MessageBoxButtons.OK);
             }
         }
-
         private void btn_CONNECT_DISCONNECT_Click(object sender, EventArgs e)
         {
             if (port == null || slaveAddr == -1)
@@ -176,7 +163,6 @@ namespace LGiC5_Control
             }
             else SetDisconnectionState();
         }
-
         private void createMaster(int readTimeout, int writeTimeout)
         {
             ModbusProvider.GetMaster().SetParameters(port, (byte)slaveAddr);
@@ -184,7 +170,6 @@ namespace LGiC5_Control
             ModbusProvider.GetMaster().DataTransferred += CommonAreaReadResult;
             
         }
-
         private void CommonAreaReadResult(object sender, EventArgs arg)
         {
             ModbusEventArgs mea = (ModbusEventArgs)arg;
@@ -195,7 +180,6 @@ namespace LGiC5_Control
                 MessageBox.Show(mea.MasterMsg, "Attention!");
             }
         }
-
         public void SetDisconnectionState()
         {
             timerCheckConnection.Enabled = false;
@@ -211,13 +195,13 @@ namespace LGiC5_Control
             pb_slave.Image = Properties.Resources.questionMark;
             portDetailsAndSlaveAddrReset();
         }
-
         public void SetConnectionState()
         {
             btn_setSetupPort.Visible = false;
             btn_setSlaveID.Visible = false;
             timerCheckConnection.Enabled = true;
             IsConnectionCorrect = true;
+            WriteLastSettingsToFile();
             pb_connectionArrow.Image = Properties.Resources.greenDoubleArrow;
             btn_driveConnect.Text = "DISCONNECT";
             btn_driveConnect.ForeColor = Color.Red;
@@ -226,15 +210,50 @@ namespace LGiC5_Control
             pb_slave.Image = Properties.Resources.LG_iC5;
 
         }
-
         private void btn_lastSettings_Click(object sender, EventArgs e)
         {
-            cb_commPort.SelectedIndex = 14;
-            cb_commBaud.SelectedIndex = 3;
-            cb_dataBit.SelectedIndex = 0;
-            cb_parityBit.SelectedIndex = 0;
-            cb_stopBit.SelectedIndex = 0;
-            cb_slaveAddr.SelectedIndex = 1;
+            ReadLastSettingsFromFile();
+        }
+
+        private void ReadLastSettingsFromFile()
+        {
+            if(File.Exists(lastSettingsPath))
+            {
+                StreamReader reader = new StreamReader(lastSettingsPath);
+                string[] tab = new string[6];
+                for (int i = 0; i < tab.Length; i++)
+                {
+                    tab[i] = reader.ReadLine();
+                }
+                reader.Close();
+                cb_commPort.SelectedIndex = int.Parse(tab[0]);
+                cb_commBaud.SelectedIndex = int.Parse(tab[1]);
+                cb_dataBit.SelectedIndex = int.Parse(tab[2]);
+                cb_parityBit.SelectedIndex = int.Parse(tab[3]);
+                cb_stopBit.SelectedIndex = int.Parse(tab[4]);
+                cb_slaveAddr.SelectedIndex = int.Parse(tab[5]);
+            }
+            else
+            {
+                MessageBox.Show("The feature is currently unavailable.", "Attention!");
+            }
+        }
+
+        private void WriteLastSettingsToFile()
+        {
+            StreamWriter writer;
+            if (!File.Exists(lastSettingsPath)) 
+                writer = File.CreateText(lastSettingsPath);
+            else
+                writer = new StreamWriter(lastSettingsPath, false);
+
+            writer.WriteLine(cb_commPort.SelectedIndex.ToString());
+            writer.WriteLine(cb_commBaud.SelectedIndex.ToString());
+            writer.WriteLine(cb_dataBit.SelectedIndex.ToString());
+            writer.WriteLine(cb_parityBit.SelectedIndex.ToString());
+            writer.WriteLine(cb_stopBit.SelectedIndex.ToString());
+            writer.WriteLine(cb_slaveAddr.SelectedIndex.ToString());
+            writer.Close();
         }
 
         private async void timerCheckConnection_Tick(object sender, EventArgs e)

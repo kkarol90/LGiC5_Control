@@ -1,15 +1,7 @@
-﻿using LGiC5_Control.SpecialControls;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using System.IO;
-using System.IO.Ports;
-using Modbus.Device;
 using System.Windows.Forms;
 using DriveControlLibrary;
 
@@ -17,14 +9,14 @@ namespace LGiC5_Control
 {
     public partial class FormKeyPad : Form
     {
-        static List<Register> readOnlySection;
-        static List<Register> readWriteSection;       
-        int updateIntervalTime;
-        double[] intervalArray;
-        bool isKeypadActive;
-        bool isKeypadReady;   
+        private static List<Register> readOnlySection;
+        private static List<Register> readWriteSection;       
+        private int updateIntervalTime;
+        private double[] intervalArray;
+        private bool isKeypadActive;
+        private bool isKeypadReady;   
 
-        public FormKeyPad()
+        internal FormKeyPad()
         {
             InitializeComponent();
             isKeypadReady = true;
@@ -33,16 +25,14 @@ namespace LGiC5_Control
             timer_UpdateSections.Interval = UpdateIntervalTime;
             cb_updateTime.DataSource = intervalArray;
             cb_updateTime.SelectedIndex = 1;
-            //Initial switch
             IsKeypadActive = false;
-            //Initial knob
             knob_pot.LargeChange = 1000;
             knob_pot.Minimum = 0;
             knob_pot.Maximum = 5000;
             ResetView();
         }
 
-        public int UpdateIntervalTime
+        internal int UpdateIntervalTime
         {
             get => updateIntervalTime;
             set
@@ -51,8 +41,7 @@ namespace LGiC5_Control
                 timer_UpdateSections.Interval = value;
             }
         }
-
-        public bool IsKeypadActive
+        internal bool IsKeypadActive
         {
             get => isKeypadActive;
             set
@@ -77,43 +66,7 @@ namespace LGiC5_Control
                 }
             }
         }
-
-        private async void keyboardCommand(ushort addr, ushort value)
-        {
-            if (!IsKeypadActive || !isKeypadReady) return;
-            isKeypadReady = false;
-            await Task.Run(() =>
-            {
-                ModbusProvider.GetMaster().SendSingleRegister(addr, value);
-            });
-            isKeypadReady = true;
-            UpdateSections();
-        }
-
-        private void rBtn_run_Click(object sender, EventArgs e)
-        {
-            ushort addr = 6;
-            ushort value;
-            if (cb_reverse.Checked) value = 4;
-            else value = 2;
-            keyboardCommand(addr, value);
-        }
-
-        private void rBtn_stop_Click(object sender, EventArgs e)
-        {
-            ushort addr = 6;
-            ushort value = 1;
-            keyboardCommand(addr, value);
-        }
-
-        private void knobControl_ValueChanged(object Sender)
-        {
-
-            ushort addr = 5;
-            ushort value = (ushort)knob_pot.Value;
-            keyboardCommand(addr, value);
-        }
-            
+        
         internal void UpdateSections()
         {
             dgv_readWriteSection.InvalidateColumn(dgv_readWriteSection.Columns["Value"].Index);
@@ -121,8 +74,7 @@ namespace LGiC5_Control
             dgv_readOnlySection.InvalidateColumn(dgv_readOnlySection.Columns["Value"].Index);
             dgv_readOnlySection.Update();
         }
-
-        internal void buildKeypadParamsView(LGdrive lgDrive)
+        internal void BuildKeypadParamsView(LGdrive lgDrive)
         {
             readOnlySection = new List<Register>();
             readWriteSection = new List<Register>();
@@ -139,7 +91,82 @@ namespace LGiC5_Control
             buildReadOnlySection();
             buildReadWriteSection();
         }
+        internal void IsUpdateTimerRun(bool isActive)
+        {
+            timer_UpdateSections.Enabled = isActive;
+        }
+        internal void InitializeDGV()
+        {
+            setKeypadVisible(true);
+            dgv_readOnlySection.CurrentCell = null;
+            dgv_readWriteSection.CurrentCell = null;
 
+            for (int i = 0; i < dgv_readWriteSection.RowCount; i++)
+            {
+                dgv_readWriteSection.Rows[i].Cells["Setter"].Value = false;
+            }
+        }
+        internal void ResetView()
+        {
+            setKeypadVisible(false);
+            btn_setComArea.Visible = false;
+            btn_off.Visible = false;
+            btn_on.Visible = false;
+            dgv_readOnlySection.DataSource = null;
+            dgv_readWriteSection.DataSource = null;
+            readOnlySection = null;
+            readWriteSection = null;
+            dgv_readWriteSection.Columns.Clear();
+            dgv_readOnlySection.Refresh();
+            dgv_readWriteSection.Refresh();
+        }
+        internal void setKeypadVisible(bool state)
+        {
+            if (state) pb_drive.Image = Properties.Resources.LG_iC5_keypad;
+            else pb_drive.Image = Properties.Resources.DriveQuestionMark;
+            rtb_display.Visible = state;
+            rBtn_run.Visible = state;
+            rBtn_stop.Visible = state;
+            btn_down.Visible = state;
+            btn_up.Visible = state;
+            btn_right.Visible = state;
+            btn_left.Visible = state;
+            btn_middle.Visible = state;
+            knob_pot.Visible = state;
+            cb_reverse.Visible = state;
+        }
+        private async void keypadCommand(ushort addr, ushort value)
+        {
+            if (!IsKeypadActive || !isKeypadReady) return;
+            isKeypadReady = false;
+            await Task.Run(() =>
+            {
+                ModbusProvider.GetMaster().SendSingleRegister(addr, value);
+            });
+            isKeypadReady = true;
+            UpdateSections();
+        }
+        private void rBtn_run_Click(object sender, EventArgs e)
+        {
+            ushort addr = 6;
+            ushort value;
+            if (cb_reverse.Checked) value = 4;
+            else value = 2;
+            keypadCommand(addr, value);
+        }
+        private void rBtn_stop_Click(object sender, EventArgs e)
+        {
+            ushort addr = 6;
+            ushort value = 1;
+            keypadCommand(addr, value);
+        }
+        private void knobControl_ValueChanged(object Sender)
+        {
+            ushort addr = 5;
+            ushort value = (ushort)knob_pot.Value;
+            rtb_display.Text = String.Format("{0:D2}.{1:D2}", (value / 100), (value % 100));
+            keypadCommand(addr, value);
+        }
         private void buildReadWriteSection()
         {
             dgv_readWriteSection.DataSource = readWriteSection;
@@ -180,7 +207,6 @@ namespace LGiC5_Control
             }
             dgv_readWriteSection.CurrentCell = null;
         }
-
         private void buildReadOnlySection()
         {
             dgv_readOnlySection.DataSource = readOnlySection;
@@ -205,7 +231,6 @@ namespace LGiC5_Control
 
             dgv_readOnlySection.CurrentCell = null;
         }
-
         private async void btn_setComArea_Click(object sender, EventArgs e)
         {
             List<Register> regList = new List<Register>();
@@ -233,23 +258,15 @@ namespace LGiC5_Control
             });
             UpdateSections();
         }
-
         private void timerUpdateSections_Tick(object sender, EventArgs e)
         {
             UpdateSections();
         }
-
         private void cb_updateTime_SelectedValueChanged(object sender, EventArgs e)
         {
             UpdateIntervalTime = (int)(double.Parse(cb_updateTime.Items[cb_updateTime.SelectedIndex]
                                              .ToString()) * 1000);
         }       
-
-        internal void IsUpdateTimerRun(bool isActive)
-        {
-            timer_UpdateSections.Enabled = isActive;
-        }
-
         private void btn_on_Click(object sender, EventArgs e)
         {
             if (!IsKeypadActive)
@@ -257,56 +274,12 @@ namespace LGiC5_Control
                 IsKeypadActive = true;
             }
         }
-
         private void btn_off_Click(object sender, EventArgs e)
         {
             if (IsKeypadActive)
             {
                 IsKeypadActive = false;
             }
-        }
-
-        internal void InitializeDGV()
-        {          
-            setKeypadVisible(true);
-            dgv_readOnlySection.CurrentCell = null;
-            dgv_readWriteSection.CurrentCell = null;
-
-            for (int i = 0; i < dgv_readWriteSection.RowCount; i++)
-            {
-                dgv_readWriteSection.Rows[i].Cells["Setter"].Value = false;
-            }
-        }
-
-        internal void ResetView()
-        {           
-            setKeypadVisible(false);
-            btn_setComArea.Visible = false;
-            btn_off.Visible = false;
-            btn_on.Visible = false;
-            dgv_readOnlySection.DataSource = null;
-            dgv_readWriteSection.DataSource = null;
-            readOnlySection = null;
-            readWriteSection = null;
-            dgv_readWriteSection.Columns.Clear();
-            dgv_readOnlySection.Refresh();
-            dgv_readWriteSection.Refresh();
-        }
-
-        internal void setKeypadVisible(bool state)
-        {
-            if (state) pb_drive.Image = Properties.Resources.LG_iC5_keypad;
-            else pb_drive.Image = Properties.Resources.DriveQuestionMark;
-            rtb_display.Visible = state;
-            rBtn_run.Visible = state;
-            rBtn_stop.Visible = state;
-            btn_down.Visible = state;
-            btn_up.Visible = state;
-            btn_right.Visible = state;
-            btn_left.Visible = state;
-            btn_middle.Visible = state;
-            knob_pot.Visible = state;
-            cb_reverse.Visible = state;
         }
     }
 }

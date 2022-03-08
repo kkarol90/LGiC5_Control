@@ -1,13 +1,6 @@
-﻿using ClosedXML.Report;
-using DriveControlLibrary;
+﻿using DriveControlLibrary;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.IO;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -15,26 +8,50 @@ namespace LGiC5_Control
 {
     public partial class FormParameter : Form
     {
-        public enum ParameterArea { GroupDRV, GroupF, GroupH, GroupI};
-        ParameterArea selectedArea;
-        LGdrive currentDrive;
-        DataGridView dgv;
+        internal enum ParameterArea { GroupDRV, GroupF, GroupH, GroupI};
+        private ParameterArea selectedArea;
+        private LGdrive currentDrive;
+        private DataGridView dgv;
         private bool firstCall;
 
-        public FormParameter()
+        internal FormParameter()
         {
             InitializeComponent();
             firstCall = true;
             menuInit();
-            ParamsDisplayBox.ButtonAcceptClick += new EventHandler(this.DisplaySettingsAcceptClick);
+            ParamsDisplayBox.ButtonAcceptClick += new EventHandler(this.displaySettingsAcceptClick);
             ParamsDisplayBox.Selections = new bool[] {false, false,false,false,false,false, false};
         }
 
-        public bool NeedRefresh { get; set; }
-        public ParameterArea SelectedArea { get => selectedArea; set => selectedArea = value; }
-        public LGdrive CurrentDrive { get => currentDrive; set => currentDrive = value; }
+        internal ParameterArea SelectedArea { get => selectedArea; set => selectedArea = value; }
+        internal LGdrive CurrentDrive { get => currentDrive; set => currentDrive = value; }
 
-        private void DisplaySettingsAcceptClick(object sender, EventArgs e)
+        internal void ParameterFormIsSelected()
+        {
+            btn_1_Click(this, EventArgs.Empty);
+        }
+        internal void OnDriveConnect(LGdrive drive)
+        {
+            currentDrive = drive;
+            dgv = paramsMenu.GetDGV();
+        }
+        internal void OnDriveDisconnect()
+        {
+            currentDrive = null;
+            firstCall = true;
+            paramsMenu.DataSource(null, null, null, null);
+            dgv.Columns.Clear();
+        }
+        internal void SetDataSource()
+        {
+            paramsMenu.DataSource(CurrentDrive.Memory.GroupDRV, CurrentDrive.Memory.GroupF
+                                  , CurrentDrive.Memory.GroupH, CurrentDrive.Memory.GroupI);
+        }
+        internal void RefreshParameterTable()
+        {
+            paramsMenu.RefreshValue();
+        }
+        private void displaySettingsAcceptClick(object sender, EventArgs e)
         {
             if (currentDrive == null || dgv.DataSource == null) return;
             dgv.Columns["Address"].Visible = ParamsDisplayBox.Selections[6];
@@ -45,7 +62,6 @@ namespace LGiC5_Control
             dgv.Columns["Min"].Visible = ParamsDisplayBox.Selections[1];
             dgv.Columns["ChangeableDuringWork"].Visible = ParamsDisplayBox.Selections[0];
         }
-
         private void menuInit()
         {
             paramsMenu.ActionButtons[0].Text = "Refresh";
@@ -58,12 +74,6 @@ namespace LGiC5_Control
             paramsMenu.ActionButtons[4].Text = "Generate raport";
             paramsMenu.ActionButtons[4].Click += new System.EventHandler(this.btn_5_Click);
         }
-
-        internal void ParameterFormIsSelected()
-        {
-            btn_2_Click(this, EventArgs.Empty);
-        }
-
         private async void btn_1_Click(object sender, EventArgs e)
         {
             if (currentDrive == null) return;
@@ -71,9 +81,8 @@ namespace LGiC5_Control
             {
                 ModbusProvider.GetMaster().ReadData(CurrentDrive.Memory.GroupedAllParamsToDataExchange(8));
             });
-            RefreshValue();
+            RefreshParameterTable();
         }
-
         private async void btn_2_Click(object sender, EventArgs e)
         {
             if (currentDrive == null || dgv.DataSource == null) return;
@@ -103,15 +112,13 @@ namespace LGiC5_Control
                 ModbusProvider.GetMaster().SendData(ModbusMemory.GroupedRegistersToDataExchange(dataToSend, 8));
                 ModbusProvider.GetMaster().ReadData(ModbusMemory.GroupedRegistersToDataExchange(dataToRead, 8));
             });
-            RefreshValue();
+            RefreshParameterTable();
         }
-
         private void btn_3_Click(object sender, EventArgs e)
         {
             if (currentDrive == null) return;
             ParamsDisplayBox.ShowDisplaySettings(this);
         }
-
         private void btn_5_Click(object sender, EventArgs e)
         {
             if (currentDrive == null) return;
@@ -128,7 +135,6 @@ namespace LGiC5_Control
 
             writeParametersToExcel();
         }
-
         private void writeParametersToExcel()
         {
             DataObject data = dgv.GetClipboardContent();
@@ -147,32 +153,6 @@ namespace LGiC5_Control
             xlr.Select();
             xlWorksheet.PasteSpecial(xlr, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing, Type.Missing);
         }
-
-        internal void OnDriveConnect(LGdrive drive)
-        {
-            currentDrive = drive;
-            dgv = paramsMenu.GetDGV();
-        }
-
-        internal void OnDriveDisconnect()
-        {
-            currentDrive = null;
-            firstCall = true;
-            paramsMenu.DataSource(null, null, null, null);
-            dgv.Columns.Clear();
-        }
-
-        internal void SetDataSource()
-        {
-            paramsMenu.DataSource(CurrentDrive.Memory.GroupDRV, CurrentDrive.Memory.GroupF
-                                  , CurrentDrive.Memory.GroupH, CurrentDrive.Memory.GroupI);
-        }
-
-        internal void RefreshValue()
-        {
-            paramsMenu.RefreshValue();
-        }
-
         private void paramsMenu_ContentSwitched(object sender, EventArgs e)
         {
             if (currentDrive == null) return;
@@ -182,11 +162,10 @@ namespace LGiC5_Control
                 setColumnsProperties();
                 firstCall = false;
             }
-            DisplaySettingsAcceptClick(this, EventArgs.Empty);
+            displaySettingsAcceptClick(this, EventArgs.Empty);
             dgv.Columns["AvailableIn"].Visible = false;
             dgv.Columns["ReadOnly"].Visible = false;
         }
-
         private void addSetterFields()
         {
             DataGridViewTextBoxColumn txtBoxColSetValue = new DataGridViewTextBoxColumn();
@@ -203,7 +182,6 @@ namespace LGiC5_Control
             dgv.Columns.Add(txtBoxColSetValue);
             dgv.Columns.Add(checkBoxColSet);
         }
-
         private void setColumnsProperties()
         {
             dgv.Columns["Address"].ReadOnly = true;

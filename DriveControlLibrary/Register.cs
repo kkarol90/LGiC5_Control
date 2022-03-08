@@ -8,23 +8,25 @@ namespace DriveControlLibrary
 {
     public class Register
     {
-        ushort address;
-        string code;
-        string name;
-        ushort value;
-        ushort factoryDefault;
-        string defaultVal;
-        string unit;
-        string max;
-        string min;
-        bool changeableDuringWork;
-        bool readOnly;
-        bool availableIn;
+        private ushort address;
+        private string code;
+        private string name;
+        private ushort value;
+        private ushort factoryDefault;
+        private string defaultVal;
+        private string unit;
+        private string max;
+        private string min;
+        private bool changeableDuringWork;
+        private bool readOnly;
+        private bool availableIn;
+
         private Register() { }
         public Register(ushort address)
         {
             this.Address = address;
         }
+
         public ushort Address { get => address; private set => address = value; }
         public string Code { get => code; private set => code = value; }
         public string Name { get => name; private set => name = value; }
@@ -37,7 +39,6 @@ namespace DriveControlLibrary
         public bool ChangeableDuringWork { get => changeableDuringWork; private set => changeableDuringWork = value; }
         public bool AvailableIn { get => availableIn; private set => availableIn = value; }
         public bool ReadOnly { get => readOnly; private set => readOnly = value; }
-
 
         public static Register ParseString(string line)
         {
@@ -67,7 +68,6 @@ namespace DriveControlLibrary
             }         
             return reg;
         }
-
         private static bool getBool(string s)
         {
             bool result = false;
@@ -76,16 +76,6 @@ namespace DriveControlLibrary
                 ushort temp = ushort.Parse(s);
                 if (temp == 1) result = true;
                 else result = false;
-            }
-            return result;
-        }
-
-        public bool IsEnable(DriveModel model)
-        {
-            bool result = false;
-            if (AvailableIn)
-            {
-                result = true;
             }
             return result;
         }

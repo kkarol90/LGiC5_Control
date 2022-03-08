@@ -1,12 +1,4 @@
-﻿using DriveControlLibrary;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System;
 using System.Windows.Forms;
 
 namespace LGiC5_Control
@@ -16,17 +8,14 @@ namespace LGiC5_Control
         public static EventHandler ButtonAcceptClick;
         static ParamsDisplayBox displayBox;
         static bool[] selections;
+
         public ParamsDisplayBox()
         {
             InitializeComponent(); 
-            //this.selections = selections;
         }
+
         public static bool[] Selections { get => selections; set => selections = value; }
 
-        private void OnButtonAcceptClick(EventArgs e)
-        {
-            ButtonAcceptClick?.Invoke(this, e);
-        }
         public static void ShowDisplaySettings(Form form)
         {
             if (displayBox != null) return;
@@ -49,13 +38,16 @@ namespace LGiC5_Control
             }
             
         }
+        private void OnButtonAcceptClick(EventArgs e)
+        {
+            ButtonAcceptClick?.Invoke(this, e);
+        }
         private void btn_cancel_Click(object sender, EventArgs e)
         {
             this.Close();
             displayBox.Dispose();
             displayBox = null;
         }
-
         private void btn_ok_Click(object sender, EventArgs e)
         {
             try
