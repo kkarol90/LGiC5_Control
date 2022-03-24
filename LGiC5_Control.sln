@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LGiC5_Control", "LGiC5_Cont
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriveControlLibrary", "DriveControlLibrary\DriveControlLibrary.csproj", "{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DriveControlTests", "DriveControlTests\DriveControlTests.csproj", "{C04523C1-4E45-4F7F-BB5F-08E9FB40AD52}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{ACFBFA63-AE91-456D-8F0B-A6DB3449FDA2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C04523C1-4E45-4F7F-BB5F-08E9FB40AD52}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C04523C1-4E45-4F7F-BB5F-08E9FB40AD52}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C04523C1-4E45-4F7F-BB5F-08E9FB40AD52}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C04523C1-4E45-4F7F-BB5F-08E9FB40AD52}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

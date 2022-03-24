@@ -42,11 +42,12 @@ namespace DriveControlLibrary
         public static List<List<Register>> GroupedRegistersToDataExchange(List<Register> groupOfReg, int maxRegPerGroup)
         {
             List<List<Register>> resultGroups = new List<List<Register>>();
-            ushort lastRegAddr = (ushort)(groupOfReg.First().Address - 1);
+            ushort lastRegAddr = ushort.MaxValue;
+            if(groupOfReg.First().Address != 0) lastRegAddr = (ushort)(groupOfReg.First().Address - 1);
             List<Register> actualList = new List<Register>();
             foreach (var reg in groupOfReg)
             {
-                if ((reg.Address == lastRegAddr + 1) && (actualList.Count < maxRegPerGroup))
+                if ((reg.Address == lastRegAddr + 1 || lastRegAddr == ushort.MaxValue) && (actualList.Count < maxRegPerGroup))
                 {
                     actualList.Add(reg);
                 }
