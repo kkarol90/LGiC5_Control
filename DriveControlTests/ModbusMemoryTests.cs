@@ -62,7 +62,6 @@ namespace DriveControlTests
                     registers.Add(new Register((ushort)(i * 10 + j)));
                 }
             }
-
             //act
             regToDataEx = ModbusMemory.GroupedRegistersToDataExchange(registers, 8);
             //assert
